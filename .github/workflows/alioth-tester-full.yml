@@ -1,4 +1,4 @@
-name: FD-alioth-test-full-clang-r547379
+name : RealOverissue-nextsusfs-multi
 
 on:
   pull_request:
@@ -9,19 +9,19 @@ on:
         required: false
       KERNEL_TREE_1:
         description: 'Kernel Tree 1'
-        default: 'https://github.com/re-noroi/kernel_sm8250'
+        default: 'https://github.com/babay162/Realking_kernel_sm8250'
         required: true
       KERNEL_TREE_BRANCH_1:
         description: 'Kernel Tree Branch 1'
-        default: 'tester'
+        default: 'apolio'
         required: true
       KERNEL_TREE_2:
         description: 'Kernel Tree 2'
-        default: 'https://github.com/re-noroi/kernel_sm8250'
+        default: 'https://github.com/babay162/Realking_kernel_sm8250'
         required: true
       KERNEL_TREE_BRANCH_2:
         description: 'Kernel Tree Branch 2'
-        default: 'tester-j3sbattery'
+        default: 'apolio-j3s'
         required: true
       CODENAME:
         description: 'Phone Codename'
@@ -29,12 +29,11 @@ on:
         required: true
       ANYKERNEL_URL:
         description: 'AnyKernel Url (leave blank if you dont want AnyKernel)'
-        default: 'https://github.com/re-noroi/anykernel3-test'
+        default: 'https://github.com/babay162/RealOverissue'
         required: false
 
 jobs:
   build:
-    strategy:
       matrix:
         kernel: [1, 2]
         type: [original, modified]
@@ -46,11 +45,23 @@ jobs:
       - name: Install Dependencies
         run: sudo apt install flex libncurses6
 
+    - name: Install prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl wget git build-essential zip ccache bc bison flex
+        sudo apt-get install -y libssl-dev libncurses5-dev libncursesw5-dev zlib1g-dev p7zip-full
+        sudo apt-get install -y python3 python3-pip python3-venv ca-certificates
+        sudo apt-get install -y clang lld gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi g++-arm-linux-gnueabi
+        sudo apt-get install -y g++-aarch64-linux-gnu file jq perl tar sudo unzip
+        sudo apt-get install -y pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl 
+        sudo apt-get install -y zip unzip tar gzip bzip2 rar unrar llvm g++-multilib bison gperf zlib1g-dev automake
+
       - name: Download & Extract Clang
         run: |
-          wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r547379.tar.gz -O clang.tar.gz
+          wget https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/10032024/neutron-clang-10032024.tar.zst -O clang.tar.zst
           mkdir clang
-          tar -xf clang.tar.gz -C clang
+          unzstd -d clang.tar.zst
+          tar -xf clang.tar -C clang
           
       - name: Set Kernel Environment Variables
         run: |
@@ -68,6 +79,7 @@ jobs:
         run: |
           cd kernel_tree
           bash nextpatch.sh
+          
       - name: Apply Modifications (if modified build)
         if: matrix.type == 'modified'
         run: |
@@ -85,18 +97,18 @@ jobs:
           export PATH="$(pwd)/clang/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=ARM64
-          export KBUILD_BUILD_USER="renoroi"
-          export KBUILD_BUILD_HOST="dreamstate"
+          export KBUILD_BUILD_USER="babay"
+          export KBUILD_BUILD_HOST="NAPI"
           cd kernel_tree
-          make O=out vendor/alioth_defconfig
+          make O=out alioth_defconfig
           make O=out CC=clang -j$(nproc --all) CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 LLVM_IAS=1
           if [[ "${{ matrix.type }}" == "original" ]]; then
             mv out/arch/arm64/boot/dtbo.img ../alioth-aosp-dtbo.img
-            mv out/arch/arm64/boot/dtb.img ../alioth-normal-dtb
+            mv out/arch/arm64/boot/dtb ../alioth-normal-dtb
             cp out/arch/arm64/boot/Image.gz ../Image.gz
           else
             mv out/arch/arm64/boot/dtbo.img ../alioth-miui-dtbo.img
-            mv out/arch/arm64/boot/dtb.img ../alioth-effcpu-dtb
+            mv out/arch/arm64/boot/dtb ../alioth-effcpu-dtb
           fi
 
       - name: Upload Kernel Artifacts
@@ -142,9 +154,9 @@ jobs:
         run: |
           COMPILED_DATE=$(date +%Y%m%d)
           if [[ "${{ matrix.kernel }}" == "1" ]]; then
-            echo "ZIP_NAME=FakeDreamer-stk-test-${{ github.event.inputs.CODENAME }}-$COMPILED_DATE" >> $GITHUB_ENV
+            echo "ZIP_NAME=RealOverissue-stock-${{ github.event.inputs.CODENAME }}-$COMPILED_DATE" >> $GITHUB_ENV
           else
-            echo "ZIP_NAME=FakeDreamer-j3s-test-${{ github.event.inputs.CODENAME }}-$COMPILED_DATE" >> $GITHUB_ENV
+            echo "ZIP_NAME=RealOverissue-j3s-${{ github.event.inputs.CODENAME }}-$COMPILED_DATE" >> $GITHUB_ENV
           fi
       
       - name: Upload Flashable Kernel Zip
